@@ -26,7 +26,7 @@
 		</ruleset>
 	</properties>
 	
-	<announcement text="Aura Effects v1.8.1 FGC/FGU (2/9/22)\rKent McCullough, SoxMax, bmos, GKEnialb, Justin" font="emotefont" icon="aura_icon" />
+	<announcement text="Aura Effects v1.8.1 FGC/FGU, 2/9/22\rKent McCullough, SoxMax, bmos, GKEnialb, Justin" font="emotefont" icon="aura_icon" />
 
 	<base>
 		<string name="option_header_aura">Auras (GM)</string>

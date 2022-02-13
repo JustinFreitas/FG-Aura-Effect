@@ -27,15 +27,10 @@ local function checkEffectRecursion(nodeEffect, sEffectComp)
 end
 
 local function isSourceDisabled(nodeChar)
-	local rActor = ActorManager.resolveActor(nodeChar);
-	local sStatus = ActorHealthManager.getHealthStatus(rActor) or "";
-	if sStatus == ActorHealthManager.STATUS_DEAD then
-		return true;
-	elseif sStatus == ActorHealthManager.STATUS_DYING then
-		return true;
-	elseif sStatus == ActorHealthManager.STATUS_UNCONSCIOUS then
-		return true;
-	end
+	local sStatus = ActorHealthManager.getHealthStatus(nodeChar);
+	return sStatus == ActorHealthManager.STATUS_DEAD
+		or sStatus == ActorHealthManager.STATUS_DYING
+		or sStatus == ActorHealthManager.STATUS_UNCONSCIOUS;
 end
 
 ---	This function is called when effect components are changed.
