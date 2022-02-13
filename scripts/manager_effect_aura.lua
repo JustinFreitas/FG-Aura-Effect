@@ -83,7 +83,7 @@ function auraOnWindowOpened(window)
 		local ctEntries = CombatManager.getSortedCombatantList();
 		for _, nodeCT in pairs(ctEntries) do
 			local tokenMap = CombatManager.getTokenFromCT(nodeCT);
-			local ctrlImage, winImage = ImageManager.getImageControl(tokenMap);
+			local _, winImage = ImageManager.getImageControl(tokenMap);
 			if tokenMap and winImage and winImage == window then
 				notifyTokenMove(tokenMap);
 			end
@@ -223,7 +223,6 @@ local function checkFaction(targetActor, nodeEffect, sFactionCheck)
 	return bReturn;
 end
 
-local CheckConditional = nil;
 function customCheckConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore)
 	local bReturn
 	if EffectManager4E then
@@ -300,8 +299,8 @@ function updateAuras(tokenMap)
 end
 
 function getAurasForNode(nodeCT)
-	if not nodeCT then 
-		return false; 
+	if not nodeCT then
+		return false;
 	end
 	local auraEffects = {};
 	local nodeEffects = DB.getChildren(nodeCT, "effects");
@@ -320,7 +319,7 @@ function notifyApplySilent(rEffect, vTargets)
 	-- Build OOB message to pass effect to host
 	local msgOOB = {};
 	msgOOB.type = OOB_MSGTYPE_AURAAPPLYSILENT;
-	for k,v in pairs(rEffect) do
+	for k, _ in pairs(rEffect) do
 		if aEffectVarMap[k] then
 			if aEffectVarMap[k].sDBType == "number" then
 				msgOOB[k] = rEffect[k] or aEffectVarMap[k].vDBDefault or 0;
@@ -400,12 +399,10 @@ local function getClosestPosition(token1, token2)
 	local center = (nSquares + 1) / 2;
 	local minPosX, minPosY;
 
-	local intercept = 0;
-	local delta = 0;
-	local right = centerPos1x + nHalfSpace;
+	local intercept;
+	local delta;
 	local left = centerPos1x - nHalfSpace;
 	local top = centerPos1y - nHalfSpace;
-	local bottom = centerPos1y + nHalfSpace;
 
 	if math.abs(dx) > math.abs(dy) then
 		if dx < 0 then
@@ -448,7 +445,7 @@ local function getClosestPosition(token1, token2)
 			minPosY = centerPos1y + ((nSquares-center) * gridsize);
 		end
 	end
-	
+
 	return minPosX, minPosY
 end
 
@@ -473,7 +470,7 @@ local function checkDistance(targetToken, sourceToken)
 		local diagmult = Interface.getDistanceDiagMult()
 		if diagmult == 1 then
 			-- Just a max of each dimension
-			local longestLeg = math.max(dx, dy, dz)		
+			local longestLeg = math.max(dx, dy, dz)
 			totalDistance = math.floor(longestLeg / gridsize + 0.5) * units
 		elseif diagmult == 0 then
 			-- Get 3D distance directly
@@ -569,7 +566,7 @@ function handleApplyEffectSilent(msgOOB)
 
 	-- Reconstitute the effect details
 	local rEffect = {};
-	for k,v in pairs(msgOOB) do
+	for k, _ in pairs(msgOOB) do
 		if aEffectVarMap[k] then
 			if aEffectVarMap[k].sDBType == "number" then
 				rEffect[k] = tonumber(msgOOB[k]) or 0;
@@ -601,26 +598,21 @@ local function removeNode(nodeEffect)
 	manageHandlers(false)
 end
 
-function expireEffectSilent(nodeActor, nodeEffect, nExpireComp)
+function expireEffectSilent(_, nodeEffect, nExpireComp)
 	if not nodeEffect then
-		-- Debug.chat(nodeActor, nodeEffect, nExpireComp)
 		return false;
 	end
-
-	-- local bGMOnly = EffectManager.isGMEffect(nodeActor, nodeEffect);
 
 	-- Check for partial expiration
 	if (nExpireComp or 0) > 0 then
 		local sEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], "");
-		local aEffectComps = parseEffect(sEffect);
+		local aEffectComps = EffectManager.parseEffect(sEffect);
 		if #aEffectComps > 1 then
 			table.remove(aEffectComps, nExpireComp);
 			local sRebuiltEffect = EffectManager.rebuildParsedEffect(aEffectComps)
 			if sRebuiltEffect and sRebuiltEffect ~= "" then
 				DB.setValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], "string", sRebuiltEffect);
 				return;
-			-- else
-				-- removeNode(nodeEffect)
 			end
 		end
 	end
@@ -632,7 +624,6 @@ end
 function handleExpireEffectSilent(msgOOB)
 	local nodeEffect = DB.findNode(msgOOB.sEffectNode);
 	if not nodeEffect then
-		-- ChatManager.SystemMessage(Interface.getString("ct_error_effectdeletefail") .. " (" .. msgOOB.sEffectNode .. ")");
 		return;
 	end
 	local nodeActor = nodeEffect.getChild("...");
