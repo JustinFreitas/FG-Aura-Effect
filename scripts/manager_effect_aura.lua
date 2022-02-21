@@ -144,11 +144,12 @@ local function checkAurasEffectingNodeForDelete(nodeCT)
 			local sourceNode = DB.findNode(sSource);
 			if sourceNode then
 				local sourceAuras = getAurasForNode(sourceNode);
-				local auraStillExists = nil;
+				local auraStillExists = false;
 				for _, sourceEffect in ipairs(sourceAuras) do
 					local sourceEffectLabel = DB.getValue(sourceEffect, aEffectVarMap["sName"]["sDBField"], "");
 					if string.find(sourceEffectLabel, targetEffectLabel, 0, true) then
 						auraStillExists = true;
+						break;
 					end
 				end
 				if not auraStillExists then
@@ -583,11 +584,13 @@ end
 ---	This function creates and removes handlers on the effects list
 local function manageHandlers(bRemove)
 	if bRemove then
-		DB.removeHandler(DB.getPath("combattracker.list.*.effects.*"), "onChildUpdate", onEffectChanged)
-		DB.removeHandler(DB.getPath("combattracker.list.*.status"), "onUpdate", onStatusChanged)
+		DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects.*"), "onChildUpdate", onEffectChanged);
+		DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects"), 'onChildDeleted', onEffectChanged);
+		DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.status"), "onUpdate", onStatusChanged);
 	else
-		DB.addHandler(DB.getPath("combattracker.list.*.effects.*"), "onChildUpdate", onEffectChanged)
-		DB.addHandler(DB.getPath("combattracker.list.*.status"), "onUpdate", onStatusChanged)
+		DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects.*"), "onChildUpdate", onEffectChanged);
+		DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects"), 'onChildDeleted', onEffectChanged);
+		DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.status"), "onUpdate", onStatusChanged);
 	end
 end
 
@@ -650,9 +653,6 @@ function onInit()
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_AURATOKENMOVE, handleTokenMovement);
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_AURAAPPLYSILENT, handleApplyEffectSilent);
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_AURAEXPIRESILENT, handleExpireEffectSilent);
-
-	-- register function to recalculate auras when effects are deleted
-	CombatManager.setCustomDeleteCombatantEffectHandler(checkDeletedAuraEffects);
 
 	-- set up the effect manager proxy functions for the detected ruleset
 	local DetectedEffectManager = nil
