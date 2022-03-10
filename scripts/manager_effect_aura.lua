@@ -33,7 +33,7 @@ local function isSourceDisabled(nodeChar)
 		or sStatus == ActorHealthManager.STATUS_UNCONSCIOUS;
 end
 
----	This function is called when effect components are changed.
+---	This function is called when effects are removed or effect components are changed.
 local function onEffectChanged(nodeEffect)
 	if checkEffectRecursion(nodeEffect, auraString) and not checkEffectRecursion(nodeEffect, fromAuraString) then
 		local nodeCT = nodeEffect.getChild("...");
