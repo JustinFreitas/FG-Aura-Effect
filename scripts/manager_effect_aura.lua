@@ -500,14 +500,6 @@ function checkAuraApplicationAndAddOrRemove(sourceNode, targetNode, auraEffect, 
 		return false
 	end
 
-	if not sourceNode then
-		local sSource = DB.getValue(auraEffect, aEffectVarMap["sSource"]["sDBField"], "")
-		sourceNode = DB.findNode(sSource)
-		if not sourceNode then
-			return false
-		end
-	end
-
 	local sLabelNodeEffect = DB.getValue(auraEffect, aEffectVarMap["sName"]["sDBField"], "")
 	local nRange, auraType = string.match(sLabelNodeEffect, "(%d+) (%w+)")
 	if nRange then
