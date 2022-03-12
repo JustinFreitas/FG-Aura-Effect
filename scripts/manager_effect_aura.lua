@@ -345,6 +345,7 @@ local function addAuraEffect(auraType, effect, targetNode, sourceNode)
 	local sLabel = DB.getValue(effect, aEffectVarMap["sName"]["sDBField"], "");
 	local applyLabel = string.match(sLabel, auraString .. ".-;%s*(.*)$");
 	if not applyLabel then
+		Debug.console(Interface.getString('aura_console_notext'), sLabel, auraString);
 		return false;
 	end
 	applyLabel = fromAuraString .. applyLabel;
@@ -507,6 +508,7 @@ function checkAuraApplicationAndAddOrRemove(sourceNode, targetNode, auraEffect, 
 	if nRange then
 		nRange = math.floor(tonumber(nRange))
 	else
+		Debug.console(Interface.getString('aura_console_norange'));
 		return false
 	end
 	if not auraType then
@@ -611,6 +613,8 @@ end
 function handleExpireEffectSilent(msgOOB)
 	local nodeEffect = DB.findNode(msgOOB.sEffectNode);
 	if not nodeEffect then
+		Debug.console(Interface.getString('aura_console_expire_nonode'));
+		-- ChatManager.SystemMessage(Interface.getString("ct_error_effectdeletefail") .. " (" .. msgOOB.sEffectNode .. ")");
 		return;
 	end
 	local nodeActor = nodeEffect.getChild("...");
