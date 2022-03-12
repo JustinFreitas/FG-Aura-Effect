@@ -29,13 +29,10 @@
 	<announcement text="Aura Effects v1.8.1 FGC/FGU, 2/9/22\rKent McCullough, SoxMax, bmos, GKEnialb, Justin" font="emotefont" icon="aura_icon" />
 
 	<base>
-		<string name="option_header_aura">Auras (GM)</string>
-		<string name="option_label_AURASILENT">Silence Notifications for Aura Types</string>
-		<string name="option_val_friend">Friend</string>
-		<string name="option_val_foe">Foe</string>
-
 		<script name="EffectManagerAURA" file="scripts/manager_effect_aura.lua" />
 		
 		<icon name="aura_icon" file="graphics/icons/aura_icon.png" />
+
+		<includefile source="strings/strings_aura.xml" />
 	</base>
 </root>
