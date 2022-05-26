@@ -9,6 +9,8 @@ OOB_MSGTYPE_AURAEXPIRESILENT = "expireeffsilent";
 local fromAuraString = "FROMAURA;"
 local auraString = "AURA:"
 
+local concentrationPrefix = '%s*%(C%)'
+
 local aEffectVarMap = {
 	["nActive"] = { sDBType = "number", sDBField = "isactive" },
 	["nDuration"] = { sDBType = "number", sDBField = "duration", vDBDefault = 1, sDisplay = "[D: %d]" },
@@ -23,7 +25,7 @@ local aEffectVarMap = {
 ---	This function checks whether an effect should trigger recalculation.
 --	It does this by checking the effect text for a series of three letters followed by a colon (as used in bonuses like CON: 4).
 local function checkEffectRecursion(nodeEffect, sEffectComp)
-	return string.find(DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], ""), sEffectComp) ~= nil;
+	return string.find(DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, ""), sEffectComp) ~= nil;
 end
 
 local function isSourceDisabled(nodeChar)
@@ -90,7 +92,7 @@ local function getAurasEffectingNode(nodeCT)
 	local auraEffects = {};
 	for _, nodeEffect in pairs(DB.getChildren(nodeCT, "effects")) do
 		if DB.getValue(nodeEffect, aEffectVarMap["nActive"]["sDBField"], 0) == 1 then
-			local sLabelNodeEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], "");
+			local sLabelNodeEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 			if string.find(sLabelNodeEffect, fromAuraString, 0, true) then
 				table.insert(auraEffects, nodeEffect);
 			end
@@ -133,7 +135,7 @@ end
 local function checkAurasEffectingNodeForDelete(nodeCT)
 	local aurasEffectingNode = getAurasEffectingNode(nodeCT);
 	for _, targetEffect in ipairs(aurasEffectingNode) do
-		local targetEffectLabel = DB.getValue(targetEffect, aEffectVarMap["sName"]["sDBField"], "");
+		local targetEffectLabel = DB.getValue(targetEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 		local targetEffectLabel = targetEffectLabel:gsub(fromAuraString,"");
 		if not string.find(targetEffectLabel, fromAuraString) then
 			local sSource = DB.getValue(targetEffect, aEffectVarMap["sSource"]["sDBField"], "");
@@ -142,7 +144,7 @@ local function checkAurasEffectingNodeForDelete(nodeCT)
 				local sourceAuras = getAurasForNode(sourceNode);
 				local auraStillExists = false;
 				for _, sourceEffect in ipairs(sourceAuras) do
-					local sourceEffectLabel = DB.getValue(sourceEffect, aEffectVarMap["sName"]["sDBField"], "");
+					local sourceEffectLabel = DB.getValue(sourceEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 					if string.find(sourceEffectLabel, targetEffectLabel, 0, true) then
 						auraStillExists = true;
 						break;
@@ -166,12 +168,12 @@ function checkDeletedAuraEffects(nodeFromDelete)
 end
 
 function checkAuraAlreadyEffecting(nodeSource, nodeTarget, effect)
-	local sLabel = DB.getValue(effect, aEffectVarMap["sName"]["sDBField"], "");
+	local sLabel = DB.getValue(effect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 	for _, nodeEffect in pairs(DB.getChildren(nodeTarget, "effects")) do
 		-- if DB.getValue(nodeEffect, aEffectVarMap["nActive"]["sDBField"], 0) ~= 2 then
 		local sSource = DB.getValue(nodeEffect, aEffectVarMap["sSource"]["sDBField"]);
 		if sSource == nodeSource.getPath() then
-			local sEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], "");
+			local sEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 			sEffect = sEffect:gsub(fromAuraString,"");
 			if string.find(sLabel, sEffect, 0, true) then
 				return nodeEffect;
@@ -300,7 +302,7 @@ function getAurasForNode(nodeCT)
 	local nodeEffects = DB.getChildren(nodeCT, "effects");
 	for _, nodeEffect in pairs(nodeEffects) do
 		if DB.getValue(nodeEffect, aEffectVarMap["nActive"]["sDBField"], 0) == 1 then
-			local sLabelNodeEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], "");
+			local sLabelNodeEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 			if string.match(sLabelNodeEffect, "%s*" .. auraString) then
 				table.insert(auraEffects, nodeEffect);
 			end
@@ -342,7 +344,7 @@ function notifyApplySilent(rEffect, vTargets)
 end
 
 local function addAuraEffect(auraType, effect, targetNode, sourceNode)
-	local sLabel = DB.getValue(effect, aEffectVarMap["sName"]["sDBField"], "");
+	local sLabel = DB.getValue(effect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 	local applyLabel = string.match(sLabel, auraString .. ".-;%s*(.*)$");
 	if not applyLabel then
 		Debug.console(Interface.getString('aura_console_notext'), sLabel, auraString);
@@ -503,7 +505,7 @@ function checkAuraApplicationAndAddOrRemove(sourceNode, targetNode, auraEffect, 
 		return false
 	end
 
-	local sLabelNodeEffect = DB.getValue(auraEffect, aEffectVarMap["sName"]["sDBField"], "")
+	local sLabelNodeEffect = DB.getValue(auraEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "")
 	local nRange, auraType = string.match(sLabelNodeEffect, "(%d+) (%w+)")
 	if nRange then
 		nRange = math.floor(tonumber(nRange))
@@ -594,7 +596,7 @@ function expireEffectSilent(_, nodeEffect, nExpireComp)
 
 	-- Check for partial expiration
 	if (nExpireComp or 0) > 0 then
-		local sEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], "");
+		local sEffect = DB.getValue(nodeEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 		local aEffectComps = EffectManager.parseEffect(sEffect);
 		if #aEffectComps > 1 then
 			table.remove(aEffectComps, nExpireComp);
