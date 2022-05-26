@@ -135,8 +135,7 @@ end
 local function checkAurasEffectingNodeForDelete(nodeCT)
 	local aurasEffectingNode = getAurasEffectingNode(nodeCT);
 	for _, targetEffect in ipairs(aurasEffectingNode) do
-		local targetEffectLabel = DB.getValue(targetEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
-		local targetEffectLabel = targetEffectLabel:gsub(fromAuraString,"");
+		local targetEffectLabel = DB.getValue(targetEffect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, ""):gsub(fromAuraString, "");
 		if not string.find(targetEffectLabel, fromAuraString) then
 			local sSource = DB.getValue(targetEffect, aEffectVarMap["sSource"]["sDBField"], "");
 			local sourceNode = DB.findNode(sSource);
@@ -251,7 +250,6 @@ local function auraOnMove(tokenMap)
 		onMove(tokenMap);
 	end
 	if Session.IsHost then
-		-- Debug.chat("onMove aura update", tokenMap)
 		notifyTokenMove(tokenMap)
 	end
 end
@@ -347,7 +345,6 @@ local function addAuraEffect(auraType, effect, targetNode, sourceNode)
 	local sLabel = DB.getValue(effect, aEffectVarMap["sName"]["sDBField"], ""):gsub(concentrationPrefix, "");
 	local applyLabel = string.match(sLabel, auraString .. ".-;%s*(.*)$");
 	if not applyLabel then
-		Debug.console(Interface.getString('aura_console_notext'), sLabel, auraString);
 		return false;
 	end
 	applyLabel = fromAuraString .. applyLabel;
@@ -510,7 +507,6 @@ function checkAuraApplicationAndAddOrRemove(sourceNode, targetNode, auraEffect, 
 	if nRange then
 		nRange = math.floor(tonumber(nRange))
 	else
-		Debug.console(Interface.getString('aura_console_norange'));
 		return false
 	end
 	if not auraType then
@@ -615,7 +611,6 @@ end
 function handleExpireEffectSilent(msgOOB)
 	local nodeEffect = DB.findNode(msgOOB.sEffectNode);
 	if not nodeEffect then
-		Debug.console(Interface.getString('aura_console_expire_nonode'));
 		-- ChatManager.SystemMessage(Interface.getString("ct_error_effectdeletefail") .. " (" .. msgOOB.sEffectNode .. ")");
 		return;
 	end
