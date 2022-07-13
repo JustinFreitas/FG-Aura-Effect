@@ -489,7 +489,7 @@ end
 
 local function isClientFGU()
 	local nMajor = Interface.getVersion()
-	return nMajor < 4
+	return nMajor >= 4
 end
 
 -- check FG version. if unity, use Token.getDistanceBetween.
