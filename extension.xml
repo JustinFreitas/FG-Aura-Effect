@@ -26,7 +26,7 @@
 		</ruleset>
 	</properties>
 	
-	<announcement text="Aura Effects v1.8.2 FGC/FGU, 5/25/22\rKent McCullough, SoxMax, bmos, GKEnialb, JustinF" font="emotefont" icon="aura_icon" />
+	<announcement text="Aura Effects v1.8.2 FGC/FGU, 7/12/22\rKent McCullough, SoxMax, bmos, GKEnialb" font="emotefont" icon="aura_icon" />
 
 	<base>
 		<script name="EffectManagerAURA" file="scripts/manager_effect_aura.lua" />

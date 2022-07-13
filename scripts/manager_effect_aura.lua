@@ -487,10 +487,15 @@ local function checkDistance(targetToken, sourceToken)
 	end
 end
 
+local function isClientFGU()
+	local nMajor = Interface.getVersion()
+	return nMajor < 4
+end
+
 -- check FG version. if unity, use Token.getDistanceBetween.
 -- if classic, call checkDistance function above
 local function anyGetDistanceBetween(sourceToken, targetToken)
-	if UtilityManager.isClientFGU() then
+	if isClientFGU() then
 		return Token.getDistanceBetween(sourceToken, targetToken)
 	else
 		return checkDistance(sourceToken, targetToken)
@@ -678,7 +683,7 @@ function onInit()
 	Interface.onWindowOpened = auraOnWindowOpened;
 
 	-- create the appropriate proxy function for the FG version being used.
-	if UtilityManager and UtilityManager.isClientFGU and not UtilityManager.isClientFGU() then
+	if not isClientFGU() then
 		updateAttributesFromToken = TokenManager.updateAttributesFromToken;
 		TokenManager.updateAttributesFromToken = auraUpdateAttributesFromToken;
 	else
