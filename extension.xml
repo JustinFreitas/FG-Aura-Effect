@@ -2,7 +2,7 @@
 <root version="3.3" >
 	<properties>
 		<name>Feature: Aura Effects</name>
-		<version>1.8.2</version>
+		<version>1.8.3</version>
 		<author>Kent McCullough</author>
 		<description>Adds and removes effects based on proximity.</description>
 		<loadorder>999</loadorder>
@@ -26,7 +26,7 @@
 		</ruleset>
 	</properties>
 	
-	<announcement text="Aura Effects v1.8.2 FGC/FGU, 7/12/22\rKent McCullough, SoxMax, bmos, GKEnialb" font="emotefont" icon="aura_icon" />
+	<announcement text="Aura Effects v1.8.3 FGC/FGU, 10/23/22\rKent McCullough, SoxMax, bmos, GKEnialb" font="emotefont" icon="aura_icon" />
 
 	<base>
 		<script name="EffectManagerAURA" file="scripts/manager_effect_aura.lua" />
