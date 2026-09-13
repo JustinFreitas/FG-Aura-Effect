@@ -284,12 +284,16 @@ local function customCheckConditional(rActor, nodeEffect, aConditions, rTarget, 
     return bReturn;
 end
 
+local function isHostSafe()
+	return (Session and Session.IsHost) or (User and User.isHost and User.isHost())
+end
+
 local onMove = nil;
 local function auraOnMove(tokenMap)
 	if onMove then
 		onMove(tokenMap);
 	end
-	if Session.IsHost then
+	if isHostSafe() then
 		notifyTokenMove(tokenMap)
 	end
 end
@@ -362,7 +366,7 @@ function notifyApplySilent(rEffect, vTargets)
 			end
 		end
 	end
-	if Session.IsHost then
+	if isHostSafe() then
 		msgOOB.user = "";
 	else
 		msgOOB.user = User.getUsername();
@@ -527,9 +531,27 @@ local function checkDistance(targetToken, sourceToken)
 	end
 end
 
-local function isClientFGU()
-	local nMajor = Interface.getVersion()
-	return nMajor >= 4
+function checkFGC()
+	if UtilityManager and UtilityManager.isClientFGU then
+		return not UtilityManager.isClientFGU()
+	end
+	if Session and Session.VersionMajor then
+		return Session.VersionMajor < 4
+	end
+	local sVersion = Interface.getVersion()
+	if type(sVersion) == "string" then
+		local sMajor = sVersion:match("^(%d+)")
+		if sMajor then
+			return (tonumber(sMajor) or 0) < 4
+		end
+	elseif type(sVersion) == "number" then
+		return sVersion < 4
+	end
+	return false
+end
+
+function isClientFGU()
+	return not checkFGC()
 end
 
 -- check FG version. if unity, use Token.getDistanceBetween.
@@ -611,23 +633,35 @@ function handleApplyEffectSilent(msgOOB)
 	EffectManager.addEffect(msgOOB.user, msgOOB.identity, nodeCTEntry, rEffect, false);
 end
 
+local bAuraHandlersRegistered = false;
 ---	This function creates and removes handlers on the effects list
 local function manageHandlers(bRemove)
 	if bRemove then
-		DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects.*"), "onChildUpdate", onEffectChanged);
-		DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects"), 'onChildDeleted', onEffectChanged);
-		DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.status"), "onUpdate", onStatusChanged);
+		if bAuraHandlersRegistered then
+			DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects.*"), "onChildUpdate", onEffectChanged);
+			DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects"), 'onChildDeleted', onEffectChanged);
+			DB.removeHandler(DB.getPath(CombatManager.CT_LIST .. ".*.status"), "onUpdate", onStatusChanged);
+			bAuraHandlersRegistered = false;
+		end
 	else
-		DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects.*"), "onChildUpdate", onEffectChanged);
-		DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects"), 'onChildDeleted', onEffectChanged);
-		DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.status"), "onUpdate", onStatusChanged);
+		if not bAuraHandlersRegistered then
+			DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects.*"), "onChildUpdate", onEffectChanged);
+			DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.effects"), 'onChildDeleted', onEffectChanged);
+			DB.addHandler(DB.getPath(CombatManager.CT_LIST .. ".*.status"), "onUpdate", onStatusChanged);
+			bAuraHandlersRegistered = true;
+		end
 	end
 end
 
 ---	This function removes nodes without triggering recursion
 local function removeNode(nodeEffect)
+	if not nodeEffect then return end
 	manageHandlers(true)
-	nodeEffect.delete()
+	if nodeEffect.delete then
+		nodeEffect.delete()
+	elseif DB.deleteNode then
+		DB.deleteNode(nodeEffect)
+	end
 	manageHandlers(false)
 end
 
@@ -704,9 +738,11 @@ function onInit()
 		DetectedEffectManager = EffectManager35E
 	elseif EffectManagerPFRPG2 then
 		DetectedEffectManager = EffectManagerPFRPG2
-		handleExpireEffect_old = EffectManager.handleExpireEffect
-		OOBManager.registerOOBMsgHandler("expireeff", PFRPG2handleExpireEffect);
-		EffectManager.handleExpireEffect = PFRPG2handleExpireEffect
+		if EffectManager and EffectManager.handleExpireEffect ~= PFRPG2handleExpireEffect then
+			handleExpireEffect_old = EffectManager.handleExpireEffect
+			OOBManager.registerOOBMsgHandler("expireeff", PFRPG2handleExpireEffect);
+			EffectManager.handleExpireEffect = PFRPG2handleExpireEffect
+		end
 	elseif EffectManagerSFRPG then
 		DetectedEffectManager = EffectManagerSFRPG
 	elseif EffectManager5E then
@@ -716,24 +752,32 @@ function onInit()
 	end
 
 	-- create proxy function to add FACTION conditional
-	checkConditional = DetectedEffectManager.checkConditional;
-	DetectedEffectManager.checkConditional = customCheckConditional;
+	if DetectedEffectManager and DetectedEffectManager.checkConditional and DetectedEffectManager.checkConditional ~= customCheckConditional then
+		checkConditional = DetectedEffectManager.checkConditional;
+		DetectedEffectManager.checkConditional = customCheckConditional;
+	end
 
 	-- create proxy function to recalculate auras when new windows are opened
-	onWindowOpened = Interface.onWindowOpened;
-	Interface.onWindowOpened = auraOnWindowOpened;
+	if Interface.onWindowOpened ~= auraOnWindowOpened then
+		onWindowOpened = Interface.onWindowOpened;
+		Interface.onWindowOpened = auraOnWindowOpened;
+	end
 
 	-- create the appropriate proxy function for the FG version being used.
 	if not isClientFGU() then
-		updateAttributesFromToken = TokenManager.updateAttributesFromToken;
-		TokenManager.updateAttributesFromToken = auraUpdateAttributesFromToken;
+		if TokenManager and TokenManager.updateAttributesFromToken and TokenManager.updateAttributesFromToken ~= auraUpdateAttributesFromToken then
+			updateAttributesFromToken = TokenManager.updateAttributesFromToken;
+			TokenManager.updateAttributesFromToken = auraUpdateAttributesFromToken;
+		end
 	else
-		onMove = Token.onMove
-		Token.onMove = auraOnMove
+		if Token and Token.onMove and Token.onMove ~= auraOnMove then
+			onMove = Token.onMove;
+			Token.onMove = auraOnMove;
+		end
 	end
 
 	-- all handlers should be created on GM machine
-	if Session.IsHost then
+	if isHostSafe() then
 		manageHandlers(false)
 	end
 end
